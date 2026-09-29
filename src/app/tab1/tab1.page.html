@@ -1,0 +1,57 @@
+<ion-header>
+  <ion-toolbar class="cabecera">
+    <ion-title>KeyControl</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @for (llave of llaves(); track llave.id) {
+  <div class="tarjeta" [class.ocupada]="llave.estado === 'ocupada'">
+    <div class="fila">
+      <h3>{{ llave.id }}</h3>
+      <span class="badge" [class.rojo]="llave.estado === 'ocupada'">
+        {{ llave.estado === 'disponible' ? 'DISPONIBLE' : 'EN USO' }}
+      </span>
+    </div>
+
+    @if (llave.estado === 'disponible') {
+    <ion-button expand="block" color="primary" (click)="abrirModal(llave)">
+      Tomar Llave y Registrarme
+    </ion-button>
+    } @else {
+    <p class="resp">Responsable: <strong>{{ llave.nombreResponsable }}</strong></p>
+    <p class="resp">Hasta las <strong>{{ llave.horaLimite | date: 'HH:mm' }}</strong></p>
+    <ion-button expand="block" fill="outline" disabled="true">No disponible</ion-button>
+    }
+  </div>
+  }
+
+  <ion-modal [isOpen]="modalAbierto" (didDismiss)="cerrarModal()" [initialBreakpoint]="0.75" [breakpoints]="[0, 0.75]">
+    <ng-template>
+      <ion-content class="ion-padding">
+        <h2>Registro de Llave</h2>
+        <p class="sub">{{ llaveSeleccionada?.id }}</p>
+
+        <ion-input label="Cédula *" labelPlacement="stacked" fill="outline" inputmode="numeric" [(ngModel)]="cedula"
+          (ionInput)="alCambiarCedula()"></ion-input>
+        <br />
+        <ion-input label="Nombre del Responsable *" labelPlacement="stacked" fill="outline"
+          [(ngModel)]="nombre"></ion-input>
+        <br />
+        <ion-select label="Duración del préstamo *" labelPlacement="stacked" fill="outline" interface="popover"
+          [(ngModel)]="lecciones">
+          @for (n of opciones; track n) {
+          <ion-select-option [value]="n">
+            {{ n }} {{ n === 1 ? 'Lección' : 'Lecciones' }} · {{ n * minutosPorLeccion }} min
+          </ion-select-option>
+          }
+        </ion-select>
+
+        <div class="botones">
+          <ion-button color="primary" (click)="confirmar()">Confirmar</ion-button>
+          <ion-button fill="outline" color="medium" (click)="cerrarModal()">Cancelar</ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>
