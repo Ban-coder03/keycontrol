@@ -3,6 +3,63 @@
   --color: #ffffff;
 }
 
+.titulo-seccion {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 4px 0 16px;
+}
+
+.reloj-header {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-right: 12px;
+}
+
+.barra-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.buscador {
+  --background: #ffffff;
+  --border-radius: 8px;
+  --padding-start: 8px;
+}
+
+.sin-resultados {
+  text-align: center;
+  color: var(--kc-muted);
+  font-size: 14px;
+  margin: 24px 0;
+}
+
+@media (min-width: 768px) {
+  .barra-filtros {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .buscador {
+    max-width: 320px;
+  }
+}
+
+.contenedor-llaves {
+  display: grid;
+  grid-template-columns: 1fr; // móvil: 1 llave por fila
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .contenedor-llaves {
+    grid-template-columns: repeat(4, 1fr); // web: 4 llaves por fila
+  }
+}
+
 .tarjeta {
   background: #ffffff;
   color: #0f172a;
@@ -10,7 +67,6 @@
   border-left: 5px solid var(--ion-color-primary);
   border-radius: 10px;
   padding: 16px;
-  margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(15, 37, 71, 0.08);
 
   &.ocupada {
@@ -18,8 +74,18 @@
   }
 }
 
-.fila { display: flex; justify-content: space-between; align-items: center; }
-h3 { margin: 0; font-size: 17px; font-weight: 600; color: #0f172a; }
+.fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #0f172a;
+}
 
 .badge {
   font-size: 11px;
@@ -30,10 +96,37 @@ h3 { margin: 0; font-size: 17px; font-weight: 600; color: #0f172a; }
   background: var(--kc-ok-bg);
   color: var(--kc-ok-text);
 
-  &.rojo { background: var(--kc-uso-bg); color: var(--kc-uso-text); }
+  &.rojo {
+    background: var(--kc-uso-bg);
+    color: var(--kc-uso-text);
+  }
 }
 
-.resp { margin: 8px 0 0; font-size: 14px; color: var(--kc-muted); }
-.resp strong { color: #0f172a; }
-.sub { color: var(--kc-muted); margin-top: 0; }
-.botones { display: flex; gap: 8px; margin-top: 24px; }
+.resp {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--kc-muted);
+}
+
+.resp strong {
+  color: #0f172a;
+}
+
+.sub {
+  color: var(--kc-muted);
+  margin-top: 0;
+}
+
+.reloj-modal {
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--kc-muted);
+}
+
+.botones {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+}

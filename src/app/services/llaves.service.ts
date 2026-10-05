@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Docente, Llave, MINUTOS_POR_LECCION } from '../models/modelos';
+import { Docente, Llave, MINUTOS_POR_LECCION, RECESOS } from '../models/modelos';
 
 @Injectable({ providedIn: 'root' })
 export class LlavesService {
@@ -44,11 +44,43 @@ export class LlavesService {
     { id: 'Aula 10E', estado: 'disponible' },
     { id: 'Aula 11E', estado: 'disponible' },
     { id: 'Aula 12E', estado: 'disponible' },
-
   ]);
 
   buscarDocente(cedula: string): Docente | undefined {
     return this.docentes().find((d) => d.cedula === cedula);
+  }
+
+  /**
+   * Calcula la hora final sumando lecciones + recesos en cascada.
+   * Un receso se suma completo si la hora de inicio del receso cae
+   * dentro del rango [inicio, finActual], aunque el bloque termine
+   * antes de que el receso acabe. Si al sumar un receso el nuevo fin
+   * alcanza otro receso, ese también se suma (y así sucesivamente).
+   */
+  calcularHoraFinal(horaInicio: Date, lecciones: number): Date {
+    const tiempoBaseMin = lecciones * MINUTOS_POR_LECCION;
+    const inicioMin = horaInicio.getHours() * 60 + horaInicio.getMinutes();
+    let finMin = inicioMin + tiempoBaseMin;
+
+    const aplicados = new Set<number>();
+    let huboCambio = true;
+
+    while (huboCambio) {
+      huboCambio = false;
+      for (let i = 0; i < RECESOS.length; i++) {
+        if (aplicados.has(i)) continue;
+        const receso = RECESOS[i];
+        if (receso.horaMinutos >= inicioMin && receso.horaMinutos <= finMin) {
+          finMin += receso.duracion;
+          aplicados.add(i);
+          huboCambio = true; // puede que ahora alcance otro receso, se revisa de nuevo
+        }
+      }
+    }
+
+    const horaFinal = new Date(horaInicio);
+    horaFinal.setHours(0, finMin, 0, 0); // finMin ya incluye horas convertidas a minutos
+    return horaFinal;
   }
 
   tomarLlave(aulaId: string, cedula: string, nombre: string, lecciones: number) {
@@ -68,12 +100,19 @@ export class LlavesService {
       this.docentes.update((lista) => [...lista, { cedula, nombre }]);
     }
 
-    const horaLimite = Date.now() + lecciones * MINUTOS_POR_LECCION * 60_000;
+    const horaInicio = new Date();
+    const horaFinal = this.calcularHoraFinal(horaInicio, lecciones);
 
     this.llaves.update((lista) =>
       lista.map((l) =>
         l.id === aulaId
-          ? { ...l, estado: 'ocupada', nombreResponsable: nombre, cedulaResponsable: cedula, horaLimite }
+          ? {
+            ...l,
+            estado: 'ocupada',
+            nombreResponsable: nombre,
+            cedulaResponsable: cedula,
+            horaLimite: horaFinal.getTime(),
+          }
           : l
       )
     );

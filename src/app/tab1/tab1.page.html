@@ -1,30 +1,60 @@
 <ion-header>
   <ion-toolbar class="cabecera">
     <ion-title>KeyControl</ion-title>
+    <ion-text slot="end" class="reloj-header">
+      {{ horaActual() | date: 'HH:mm' }}
+    </ion-text>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  @for (llave of llaves(); track llave.id) {
-  <div class="tarjeta" [class.ocupada]="llave.estado === 'ocupada'">
-    <div class="fila">
-      <h3>{{ llave.id }}</h3>
-      <span class="badge" [class.rojo]="llave.estado === 'ocupada'">
-        {{ llave.estado === 'disponible' ? 'DISPONIBLE' : 'EN USO' }}
-      </span>
-    </div>
+  <h2 class="titulo-seccion">Catálogo de Aulas y Llaves</h2>
 
-    @if (llave.estado === 'disponible') {
-    <ion-button expand="block" color="primary" (click)="abrirModal(llave)">
-      Tomar Llave y Registrarme
-    </ion-button>
-    } @else {
-    <p class="resp">Responsable: <strong>{{ llave.nombreResponsable }}</strong></p>
-    <p class="resp">Hasta las <strong>{{ llave.horaLimite | date: 'HH:mm' }}</strong></p>
-    <ion-button expand="block" fill="outline" disabled="true">No disponible</ion-button>
+  <div class="barra-filtros">
+    <ion-input class="buscador" fill="outline" placeholder="Buscar aula..." [value]="textoBusqueda()"
+      (ionInput)="alBuscar($any($event.target).value)">
+      <ion-icon name="search-outline" slot="start"></ion-icon>
+    </ion-input>
+
+    <ion-segment [value]="filtroEstado()" (ionChange)="cambiarFiltro($any($event.detail.value))">
+      <ion-segment-button value="todas">
+        <ion-label>Todas</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="disponible">
+        <ion-label>Disponibles</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="ocupada">
+        <ion-label>Ocupadas</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  @if (llavesFiltradas().length === 0) {
+  <p class="sin-resultados">No se encontraron llaves con ese criterio.</p>
+  }
+
+  <div class="contenedor-llaves">
+    @for (llave of llavesFiltradas(); track llave.id) {
+    <div class="tarjeta" [class.ocupada]="llave.estado === 'ocupada'">
+      <div class="fila">
+        <h3>{{ llave.id }}</h3>
+        <span class="badge" [class.rojo]="llave.estado === 'ocupada'">
+          {{ llave.estado === 'disponible' ? 'DISPONIBLE' : 'EN USO' }}
+        </span>
+      </div>
+
+      @if (llave.estado === 'disponible') {
+      <ion-button expand="block" color="primary" (click)="abrirModal(llave)">
+        Tomar Llave y Registrarme
+      </ion-button>
+      } @else {
+      <p class="resp">Responsable: <strong>{{ llave.nombreResponsable }}</strong></p>
+      <p class="resp">Hasta las <strong>{{ llave.horaLimite | date: 'HH:mm' }}</strong></p>
+      <ion-button expand="block" fill="outline" disabled="true">No disponible</ion-button>
+      }
+    </div>
     }
   </div>
-  }
 
   <ion-modal [isOpen]="modalAbierto" (didDismiss)="cerrarModal()" [initialBreakpoint]="0.75" [breakpoints]="[0, 0.75]">
     <ng-template>
@@ -46,6 +76,10 @@
           </ion-select-option>
           }
         </ion-select>
+
+        <p class="reloj-modal">
+          Hora de registro: <strong>{{ horaActual() | date: 'HH:mm' }}</strong>
+        </p>
 
         <div class="botones">
           <ion-button color="primary" (click)="confirmar()">Confirmar</ion-button>
