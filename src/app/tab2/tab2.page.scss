@@ -1,0 +1,143 @@
+.cabecera {
+  --background: var(--kc-navy);
+  --color: #ffffff;
+}
+
+.titulo-seccion {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 4px 0 16px;
+}
+
+.tarjeta {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid var(--kc-borde);
+  border-left: 5px solid var(--kc-uso-text);
+  border-radius: 10px;
+  padding: 16px;
+  max-width: 420px;
+  box-shadow: 0 1px 3px rgba(15, 37, 71, 0.08);
+
+  &.vencida {
+    border: 2px solid var(--kc-uso-text);
+    background: #fff5f5;
+  }
+}
+
+.fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--kc-uso-bg);
+  color: var(--kc-uso-text);
+}
+
+.resp {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--kc-muted);
+}
+
+.resp strong {
+  color: #0f172a;
+}
+
+.aviso {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kc-uso-text);
+}
+
+.botones {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.sin-llave {
+  color: var(--kc-muted);
+  font-size: 14px;
+}
+
+.sub {
+  color: var(--kc-muted);
+  margin-top: 0;
+}
+
+.nota-historial {
+  font-size: 13px;
+  color: var(--kc-muted);
+  margin: 0 0 14px;
+}
+
+.filtros-historial {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.buscador {
+  --background: #ffffff;
+  --border-radius: 8px;
+  --padding-start: 8px;
+}
+
+.rango-fechas {
+  display: flex;
+  gap: 10px;
+
+  ion-input {
+    flex: 1;
+  }
+}
+
+.sin-resultados {
+  text-align: center;
+  color: var(--kc-muted);
+  font-size: 14px;
+  margin: 24px 0;
+}
+
+.lista-historial {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fila-historial {
+  background: #ffffff;
+  border: 1px solid var(--kc-borde);
+  border-left: 5px solid var(--ion-color-primary);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.aula-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--kc-muted);
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 4px;
+}

@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonModal,
-  IonButton, IonInput, IonSelect, IonSelectOption, IonText,
+  IonButton, IonInput, IonSelect, IonSelectOption, IonText, IonNote,
   IonSegment, IonSegmentButton, IonLabel, IonIcon, ToastController,
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -19,7 +19,7 @@ type FiltroEstado = 'todas' | 'disponible' | 'ocupada';
   styleUrls: ['tab1.page.scss'],
   imports: [
     DatePipe, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent,
-    IonModal, IonButton, IonInput, IonSelect, IonSelectOption, IonText,
+    IonModal, IonButton, IonInput, IonSelect, IonSelectOption, IonText, IonNote,
     IonSegment, IonSegmentButton, IonLabel, IonIcon,
   ],
 })
@@ -88,20 +88,75 @@ export class Tab1Page implements OnInit, OnDestroy {
     this.modalAbierto = false;
   }
 
-  // Autocompleta el nombre si la cédula ya existe
-  alCambiarCedula() {
-    const docente = this.servicio.buscarDocente(this.cedula.trim());
-    if (docente) this.nombre = docente.nombre;
+  // Teclas que siempre se permiten, sin importar el campo (navegación/edición)
+  private readonly TECLAS_PERMITIDAS = [
+    'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End',
+  ];
+
+  // Bloquea la tecla ANTES de que se escriba (más confiable que limpiar
+  // después, porque evita que compita con la actualización de ngModel).
+  bloquearTeclaCedula(event: KeyboardEvent) {
+    if (this.TECLAS_PERMITIDAS.includes(event.key)) return;
+    if (event.ctrlKey || event.metaKey) return; // permite Ctrl+C, Ctrl+V, Ctrl+A...
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  bloquearTeclaNombre(event: KeyboardEvent) {
+    if (this.TECLAS_PERMITIDAS.includes(event.key)) return;
+    if (event.ctrlKey || event.metaKey) return;
+    if (!/^[A-Za-zÁÉÍÓÚÑÜáéíóúñü ]$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  // Si pegan texto (Ctrl+V), el teclado no interviene, así que se limpia aparte
+  pegarCedula(event: ClipboardEvent) {
+    event.preventDefault();
+    const texto = event.clipboardData?.getData('text') ?? '';
+    this.alEscribirCedula(this.cedula + texto);
+  }
+
+  pegarNombre(event: ClipboardEvent) {
+    event.preventDefault();
+    const texto = event.clipboardData?.getData('text') ?? '';
+    this.alEscribirNombre(this.nombre + texto);
+  }
+
+  // Limpieza de respaldo (por si algo se cuela por otra vía, como autocompletado).
+  // Autocompleta el nombre en cuanto la cédula queda completa (9 dígitos).
+  alEscribirCedula(valor: string) {
+    const limpio = valor.replace(/\D/g, '').slice(0, 9);
+    this.cedula = limpio;
+
+    if (limpio.length === 9) {
+      const docente = this.servicio.buscarDocente(limpio);
+      if (docente) this.nombre = docente.nombre;
+    }
+  }
+
+  alEscribirNombre(valor: string) {
+    this.nombre = valor.replace(/[^A-Za-zÁÉÍÓÚÑÜáéíóúñü\s]/g, '');
   }
 
   async confirmar() {
-    if (!this.cedula.trim() || !this.nombre.trim()) {
-      return this.mostrarMensaje('Completa la cédula y el nombre.');
+    const cedula = this.cedula.trim();
+    const nombre = this.nombre.trim();
+
+    // Segunda capa de validación: nunca confiar solo en lo que deja escribir la UI.
+    if (!/^[0-9]{9}$/.test(cedula)) {
+      return this.mostrarMensaje('La cédula debe tener exactamente 9 dígitos numéricos.');
     }
-    const res = this.servicio.tomarLlave(
+    if (!/^[A-Za-zÁÉÍÓÚÑÜáéíóúñü\s]+$/.test(nombre)) {
+      return this.mostrarMensaje('El nombre solo puede contener letras y espacios.');
+    }
+
+    const res = await this.servicio.tomarLlave(
       this.llaveSeleccionada!.id,
-      this.cedula.trim(),
-      this.nombre.trim(),
+      cedula,
+      nombre,
       this.lecciones
     );
     if (res.ok) this.cerrarModal();

@@ -52,6 +52,9 @@
   display: grid;
   grid-template-columns: 1fr; // móvil: 1 llave por fila
   gap: 16px;
+  list-style: none; // es un <ul>, quitamos las viñetas
+  margin: 0;
+  padding: 0;
 }
 
 @media (min-width: 768px) {
@@ -82,7 +85,7 @@
 
 h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 27px;
   font-weight: 600;
   color: #0f172a;
 }
@@ -115,6 +118,12 @@ h3 {
 .sub {
   color: var(--kc-muted);
   margin-top: 0;
+}
+
+ion-note {
+  display: block;
+  font-size: 12px;
+  margin: -4px 0 4px 4px;
 }
 
 .reloj-modal {

@@ -8,83 +8,108 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <h2 class="titulo-seccion">Catálogo de Aulas y Llaves</h2>
+  <section aria-labelledby="titulo-catalogo">
+    <h2 id="titulo-catalogo" class="titulo-seccion">Catálogo de Aulas y Llaves</h2>
 
-  <div class="barra-filtros">
-    <ion-input class="buscador" fill="outline" placeholder="Buscar aula..." [value]="textoBusqueda()"
-      (ionInput)="alBuscar($any($event.target).value)">
-      <ion-icon name="search-outline" slot="start"></ion-icon>
-    </ion-input>
+    <section class="barra-filtros" aria-label="Buscador y filtros de llaves">
+      <ion-input class="buscador" fill="outline" placeholder="Buscar aula..."
+                 [value]="textoBusqueda()"
+                 (ionInput)="alBuscar($any($event.target).value)">
+        <ion-icon name="search-outline" slot="start"></ion-icon>
+      </ion-input>
 
-    <ion-segment [value]="filtroEstado()" (ionChange)="cambiarFiltro($any($event.detail.value))">
-      <ion-segment-button value="todas">
-        <ion-label>Todas</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="disponible">
-        <ion-label>Disponibles</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="ocupada">
-        <ion-label>Ocupadas</ion-label>
-      </ion-segment-button>
-    </ion-segment>
-  </div>
+      <ion-segment [value]="filtroEstado()"
+                   (ionChange)="cambiarFiltro($any($event.detail.value))">
+        <ion-segment-button value="todas">
+          <ion-label>Todas</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="disponible">
+          <ion-label>Disponibles</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="ocupada">
+          <ion-label>Ocupadas</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </section>
 
-  @if (llavesFiltradas().length === 0) {
-  <p class="sin-resultados">No se encontraron llaves con ese criterio.</p>
-  }
-
-  <div class="contenedor-llaves">
-    @for (llave of llavesFiltradas(); track llave.id) {
-    <div class="tarjeta" [class.ocupada]="llave.estado === 'ocupada'">
-      <div class="fila">
-        <h3>{{ llave.id }}</h3>
-        <span class="badge" [class.rojo]="llave.estado === 'ocupada'">
-          {{ llave.estado === 'disponible' ? 'DISPONIBLE' : 'EN USO' }}
-        </span>
-      </div>
-
-      @if (llave.estado === 'disponible') {
-      <ion-button expand="block" color="primary" (click)="abrirModal(llave)">
-        Tomar Llave y Registrarme
-      </ion-button>
-      } @else {
-      <p class="resp">Responsable: <strong>{{ llave.nombreResponsable }}</strong></p>
-      <p class="resp">Hasta las <strong>{{ llave.horaLimite | date: 'HH:mm' }}</strong></p>
-      <ion-button expand="block" fill="outline" disabled="true">No disponible</ion-button>
-      }
-    </div>
+    @if (llavesFiltradas().length === 0) {
+      <p class="sin-resultados">No se encontraron llaves con ese criterio.</p>
     }
-  </div>
 
-  <ion-modal [isOpen]="modalAbierto" (didDismiss)="cerrarModal()" [initialBreakpoint]="0.75" [breakpoints]="[0, 0.75]">
+    <ul class="contenedor-llaves">
+      @for (llave of llavesFiltradas(); track llave.id) {
+        <li class="tarjeta" [class.ocupada]="llave.estado === 'ocupada'">
+          <header class="fila">
+            <h3>{{ llave.id }}</h3>
+            <span class="badge" [class.rojo]="llave.estado === 'ocupada'">
+              {{ llave.estado === 'disponible' ? 'DISPONIBLE' : 'EN USO' }}
+            </span>
+          </header>
+
+          @if (llave.estado === 'disponible') {
+            <ion-button expand="block" color="primary" (click)="abrirModal(llave)">
+              Tomar Llave y Registrarme
+            </ion-button>
+          } @else {
+            <p class="resp">Responsable: <strong>{{ llave.nombreResponsable }}</strong></p>
+            <p class="resp">Hasta las <strong>{{ llave.horaLimite | date: 'HH:mm' }}</strong></p>
+            <ion-button expand="block" fill="outline" disabled="true">No disponible</ion-button>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+
+  <ion-modal [isOpen]="modalAbierto" (didDismiss)="cerrarModal()"
+             [initialBreakpoint]="0.75" [breakpoints]="[0, 0.75]">
     <ng-template>
       <ion-content class="ion-padding">
-        <h2>Registro de Llave</h2>
-        <p class="sub">{{ llaveSeleccionada?.id }}</p>
+        <form #formRef="ngForm" (ngSubmit)="confirmar()">
+          <h2>Registro de Llave</h2>
+          <p class="sub">{{ llaveSeleccionada?.id }}</p>
 
-        <ion-input label="Cédula *" labelPlacement="stacked" fill="outline" inputmode="numeric" [(ngModel)]="cedula"
-          (ionInput)="alCambiarCedula()"></ion-input>
-        <br />
-        <ion-input label="Nombre del Responsable *" labelPlacement="stacked" fill="outline"
-          [(ngModel)]="nombre"></ion-input>
-        <br />
-        <ion-select label="Duración del préstamo *" labelPlacement="stacked" fill="outline" interface="popover"
-          [(ngModel)]="lecciones">
-          @for (n of opciones; track n) {
-          <ion-select-option [value]="n">
-            {{ n }} {{ n === 1 ? 'Lección' : 'Lecciones' }} · {{ n * minutosPorLeccion }} min
-          </ion-select-option>
+          <ion-input label="Cédula *" labelPlacement="stacked" fill="outline"
+                     inputmode="numeric" maxlength="9"
+                     name="cedula" required pattern="[0-9]{9}"
+                     [(ngModel)]="cedula" #cedulaRef="ngModel"
+                     (keydown)="bloquearTeclaCedula($event)"
+                     (paste)="pegarCedula($event)"
+                     (ionInput)="alEscribirCedula($any($event.target).value)"></ion-input>
+          @if (cedulaRef.invalid && (cedulaRef.dirty || cedulaRef.touched)) {
+            <ion-note color="danger">Debe tener exactamente 9 dígitos numéricos.</ion-note>
           }
-        </ion-select>
+          <br/>
 
-        <p class="reloj-modal">
-          Hora de registro: <strong>{{ horaActual() | date: 'HH:mm' }}</strong>
-        </p>
+          <ion-input label="Nombre del Responsable *" labelPlacement="stacked"
+                     fill="outline"
+                     name="nombre" required pattern="[A-Za-zÁÉÍÓÚÑÜáéíóúñü\s]+"
+                     [(ngModel)]="nombre" #nombreRef="ngModel"
+                     (keydown)="bloquearTeclaNombre($event)"
+                     (paste)="pegarNombre($event)"
+                     (ionInput)="alEscribirNombre($any($event.target).value)"></ion-input>
+          @if (nombreRef.invalid && (nombreRef.dirty || nombreRef.touched)) {
+            <ion-note color="danger">Solo se permiten letras y espacios.</ion-note>
+          }
+          <br />
 
-        <div class="botones">
-          <ion-button color="primary" (click)="confirmar()">Confirmar</ion-button>
-          <ion-button fill="outline" color="medium" (click)="cerrarModal()">Cancelar</ion-button>
-        </div>
+          <ion-select label="Duración del préstamo *" labelPlacement="stacked"
+                      fill="outline" interface="popover" name="lecciones" [(ngModel)]="lecciones">
+            @for (n of opciones; track n) {
+              <ion-select-option [value]="n">
+                {{ n }} {{ n === 1 ? 'Lección' : 'Lecciones' }} · {{ n * minutosPorLeccion }} min
+              </ion-select-option>
+            }
+          </ion-select>
+
+          <p class="reloj-modal">
+            Hora de registro: <strong>{{ horaActual() | date: 'HH:mm' }}</strong>
+          </p>
+
+          <footer class="botones">
+            <ion-button type="submit" color="primary" [disabled]="formRef.invalid">Confirmar</ion-button>
+            <ion-button type="button" fill="outline" color="medium" (click)="cerrarModal()">Cancelar</ion-button>
+          </footer>
+        </form>
       </ion-content>
     </ng-template>
   </ion-modal>
