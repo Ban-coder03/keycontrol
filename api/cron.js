@@ -1,11 +1,13 @@
-const admin = require('firebase-admin');
+const { initializeApp, getApps, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
   });
 }
-const db = admin.firestore();
+const db = getFirestore();
 
 module.exports = async (req, res) => {
   if (req.query.key !== process.env.CRON_SECRET) {
@@ -25,7 +27,7 @@ module.exports = async (req, res) => {
 
     if (token) {
       try {
-        await admin.messaging().send({
+        await getMessaging().send({
           token,
           notification: {
             title: 'KeyControl',
