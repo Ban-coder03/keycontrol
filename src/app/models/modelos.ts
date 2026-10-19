@@ -32,7 +32,7 @@ export interface Prestamo {
   extensiones: number;
 }
 
-export const MINUTOS_POR_LECCION = 1;
+export const MINUTOS_POR_LECCION = 40;
 export const MAX_LECCIONES = 13;
 
 export interface Receso {
