@@ -1,8 +1,7 @@
-import { Timestamp } from "firebase/firestore";
-
 export interface Docente {
   cedula: string;
   nombre: string;
+  fcmToken?: string; // token del dispositivo para mandarle notificaciones push
 }
 
 export interface Llave {
@@ -14,6 +13,10 @@ export interface Llave {
   extensiones?: number;                // veces que se amplió el plazo
   horaInicio?: number;                 // milisegundos (Date.getTime())
   horaLimite?: number;                 // milisegundos (Date.getTime())
+  // true cuando ya se envió el push de vencimiento para ESTE préstamo.
+  // Se reinicia a false al tomar la llave o al ampliar el plazo, para que
+  // el proceso externo (Vercel) sepa a cuáles todavía les falta avisar.
+  notificado?: boolean;
 }
 
 // Historial de préstamos, para los reportes

@@ -1,7 +1,9 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { collection, doc, onSnapshot, runTransaction, addDoc, setDoc } from 'firebase/firestore';
+import { getToken, onMessage } from 'firebase/messaging';
 import { AlertController } from '@ionic/angular';
-import { db } from '../firebase';
+import { db, messagingPromise } from '../firebase';
+import { environment } from '../../environments/environment';
 import { Docente, Llave, Prestamo, MINUTOS_POR_LECCION, RECESOS } from '../models/modelos';
 
 const CLAVE_CEDULA_ACTIVA = 'kc_cedula_activa';
@@ -74,6 +76,15 @@ export class LlavesService {
       this.reprogramarAlarma(this.horaLimiteActiva());
     });
 
+    // Si este dispositivo ya tiene una llave activa (quedó guardada de una
+    // sesión anterior), aseguramos que su token push siga registrado.
+    const cedulaGuardada = this.leerCedulaGuardada();
+    if (cedulaGuardada) {
+      this.registrarTokenPush(cedulaGuardada);
+    }
+
+    this.escucharMensajesEnPrimerPlano();
+
     onSnapshot(this.docentesCol, (snap) => {
       this.docentes.set(
         snap.docs.map((d) => ({ cedula: d.id, ...(d.data() as Omit<Docente, 'cedula'>) }))
@@ -115,6 +126,56 @@ export class LlavesService {
     return this.docentes().find((d) => d.cedula === cedula);
   }
 
+  // --- Notificaciones push (FCM) ---
+  // Esto es lo que permite avisar al celular aunque la pantalla esté
+  // bloqueada o el navegador minimizado: un proceso externo (en Vercel)
+  // revisa Firestore cada pocos minutos y, si encuentra una llave vencida
+  // sin avisar, le manda un mensaje a este token a través de FCM. Google
+  // entrega ese mensaje directo al sistema operativo, sin que esta pestaña
+  // tenga que estar corriendo en ese momento.
+  private async registrarTokenPush(cedula: string) {
+    try {
+      if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+
+      if (Notification.permission === 'default') {
+        const permiso = await Notification.requestPermission();
+        if (permiso !== 'granted') return;
+      }
+      if (Notification.permission !== 'granted') return;
+
+      const messaging = await messagingPromise;
+      if (!messaging) return; // navegador sin soporte para push
+
+      const registro = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+      const token = await getToken(messaging, {
+        vapidKey: environment.vapidKey,
+        serviceWorkerRegistration: registro,
+      });
+
+      if (token) {
+        await setDoc(doc(db, 'docentes', cedula), { fcmToken: token }, { merge: true });
+      }
+    } catch (error) {
+      // No bloqueamos el flujo de tomar/ampliar una llave si el push falla
+      // (por ejemplo, el docente le dio "Bloquear" al permiso del navegador).
+      console.warn('No se pudo registrar el token de notificaciones push:', error);
+    }
+  }
+
+  private async escucharMensajesEnPrimerPlano() {
+    const messaging = await messagingPromise;
+    if (!messaging) return;
+
+    // Cuando la pestaña está visible, FCM no muestra la notificación del
+    // sistema solo; nos avisa aquí. Como ya tenemos la alarma local
+    // (setTimeout) mostrando la alerta de Ionic en primer plano, este
+    // mensaje llega de respaldo y solo lo registramos, sin duplicar avisos.
+    onMessage(messaging, (payload) => {
+      console.log('Push recibido en primer plano:', payload);
+    });
+  }
+
   // --- Alarma local (setTimeout real, no revisa el reloj cada segundo) ---
 
   private reprogramarAlarma(horaLimiteMs: number | null) {
@@ -143,6 +204,11 @@ export class LlavesService {
 
   private async notificarVencimiento(llave: Llave) {
     const mensaje = `Estimado usuario, su plazo para "${llave.id}" ha vencido. Por favor devuelva la llave o extienda el plazo.`;
+
+    // Avisamos aquí mismo (el navegador sigue corriendo): marcamos
+    // notificado para que el cron externo en Vercel no mande un push
+    // duplicado en su próxima revisión.
+    setDoc(doc(db, 'llaves', llave.id), { notificado: true }, { merge: true }).catch(() => {});
 
     // Si la pestaña está en primer plano, mostramos la alerta de Ionic (más
     // clara y con acción directa). Si está en segundo plano (minimizada u
@@ -247,6 +313,7 @@ export class LlavesService {
           extensiones: 0,
           horaInicio: horaInicio.getTime(),
           horaLimite: horaFinal.getTime(),
+          notificado: false,
         });
       });
     } catch {
@@ -258,6 +325,7 @@ export class LlavesService {
     }
 
     this.guardarCedulaActiva(cedula);
+    await this.registrarTokenPush(cedula);
     return { ok: true, mensaje: 'Llave registrada correctamente.' };
   }
 
@@ -309,6 +377,7 @@ export class LlavesService {
         horaLimite: nuevaHoraLimite.getTime(),
         lecciones: (llave.lecciones ?? 0) + leccionesAdicionales,
         extensiones: (llave.extensiones ?? 0) + 1,
+        notificado: false, // el nuevo plazo todavía no se ha avisado
       },
       { merge: true }
     );
