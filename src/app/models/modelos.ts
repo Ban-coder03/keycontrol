@@ -31,7 +31,7 @@ export interface Prestamo {
   horaDevolucion: number;
   extensiones: number;
 }
-
+//lecciones
 export const MINUTOS_POR_LECCION = 40;
 export const MAX_LECCIONES = 13;
 
