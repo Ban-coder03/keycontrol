@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { collection, doc, onSnapshot, runTransaction, addDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, onSnapshot, runTransaction, addDoc, setDoc, arrayUnion } from 'firebase/firestore';
 import { getToken, onMessage } from 'firebase/messaging';
 import { AlertController } from '@ionic/angular';
 import { db, messagingPromise } from '../firebase';
@@ -154,7 +154,7 @@ export class LlavesService {
       });
 
       if (token) {
-        await setDoc(doc(db, 'docentes', cedula), { fcmToken: token }, { merge: true });
+        await setDoc(doc(db, 'docentes', cedula), { fcmTokens: arrayUnion(token) }, { merge: true });
       }
     } catch (error) {
       // No bloqueamos el flujo de tomar/ampliar una llave si el push falla
@@ -208,7 +208,7 @@ export class LlavesService {
     // Avisamos aquí mismo (el navegador sigue corriendo): marcamos
     // notificado para que el cron externo en Vercel no mande un push
     // duplicado en su próxima revisión.
-    setDoc(doc(db, 'llaves', llave.id), { notificado: true }, { merge: true }).catch(() => {});
+    setDoc(doc(db, 'llaves', llave.id), { notificado: true }, { merge: true }).catch(() => { });
 
     // Si la pestaña está en primer plano, mostramos la alerta de Ionic (más
     // clara y con acción directa). Si está en segundo plano (minimizada u
