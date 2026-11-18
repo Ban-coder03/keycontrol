@@ -1,0 +1,103 @@
+<header class="barra">
+  <h1><span class="logo">K</span> KeyControl-CTPSL</h1>
+  <button type="button" class="btn-admin" (click)="accesoAdmin()">Acceso Administrador</button>
+</header>
+
+<main class="contenido">
+  @switch (pantalla()) {
+    @case ('qr') {
+      <section class="panel">
+        <h2>Escaneo de Llave</h2>
+        <p>Coloca el código QR de la llave frente a la cámara para registrar el acceso o devolución.</p>
+        <figure class="visor">
+          <video id="videoQr" playsinline muted></video>
+          @if (!camaraActiva()) { <figcaption>Cámara apagada</figcaption> }
+        </figure>
+        @if (!camaraActiva()) {
+          <button type="button" class="btn-principal" (click)="activar()">Activar Cámara</button>
+        }
+      </section>
+    }
+
+    @case ('verificar') {
+      <section class="panel">
+        <h2>Verificación de Identidad</h2>
+        <p>Llave: <strong>{{ llaveId }}</strong></p>
+
+        <figure class="visor">
+          <video id="videoRostro" playsinline muted></video>
+          @if (!escaneandoRostro()) { <figcaption>Verificación facial</figcaption> }
+        </figure>
+        @if (!escaneandoRostro()) {
+          <button type="button" class="btn-principal" (click)="iniciarRostro()">Usar reconocimiento facial</button>
+        } @else {
+          <p>Escaneando rostro...</p>
+        }
+
+        <form (ngSubmit)="verificar()">
+          <label for="cedula">Ingresa tu número de cédula:</label>
+          <input id="cedula" name="cedula" type="text" inputmode="numeric" maxlength="9"
+                 placeholder="9 dígitos" [ngModel]="cedula"
+                 (ngModelChange)="alEscribirCedula($event)" autocomplete="off" />
+          <button type="submit" class="btn-principal">Verificar Identidad</button>
+          <button type="button" class="btn-sec" (click)="volverAlQr()">Regresar al escaneo QR</button>
+        </form>
+      </section>
+    }
+
+    @case ('lecciones') {
+      <section class="panel">
+        <h2>Cantidad de Lecciones</h2>
+        <p>Hola, <strong>{{ nombre }}</strong>. Selecciona el número de lecciones (1 a {{ opciones.length }}).</p>
+        <form (ngSubmit)="confirmar()">
+          <label for="lecciones">Número de lecciones</label>
+          <select id="lecciones" name="lecciones" [(ngModel)]="lecciones">
+            @for (n of opciones; track n) {
+              <option [ngValue]="n">{{ n }} {{ n === 1 ? 'lección' : 'lecciones' }} · {{ n * minutos }} min</option>
+            }
+          </select>
+          <button type="submit" class="btn-principal">Confirmar</button>
+          <button type="button" class="btn-sec" (click)="volverAlQr()">Cancelar</button>
+        </form>
+      </section>
+    }
+  }
+</main>
+
+<footer class="pie">
+  <p>© KeyControl-CTPSL — Sistema de Gestión de Llaves</p>
+  <button type="button" class="btn-enlace" (click)="abrirTerminos()">Términos y Privacidad</button>
+</footer>
+
+@if (terminosAbiertos()) {
+  <dialog class="modal" open aria-labelledby="titulo-terminos">
+    <article class="modal-caja">
+      <header>
+        <h2 id="titulo-terminos">Términos y Privacidad</h2>
+      </header>
+
+      <section class="modal-texto">
+        <h3>1. Finalidad</h3>
+        <p>KeyControl-CTPSL registra quién toma y devuelve las llaves de las aulas, y por cuánto tiempo, para controlar su uso y avisar cuando el plazo está por vencer.</p>
+        <h3>2. Datos que se guardan</h3>
+        <p>Cédula, nombre completo, teléfono, historial de préstamos y, solo si usted lo autoriza, una representación numérica de su rostro.</p>
+        <h3>3. Reconocimiento facial</h3>
+        <p>No se guarda su fotografía, solo un código numérico generado a partir de su rostro. Es un dato biométrico sensible y su uso es voluntario: siempre puede identificarse con su cédula.</p>
+        <h3>4. Teléfono y mensajes</h3>
+        <p>Su número se usa solo para enviarle por WhatsApp avisos de plazo próximo a vencer y de plazo vencido.</p>
+        <h3>5. Quién accede a los datos</h3>
+        <p>Únicamente la administración de la institución. No se venden ni se comparten con terceros.</p>
+        <h3>6. Conservación</h3>
+        <p>El historial se conserva mientras sea necesario para los reportes institucionales. El código facial, mientras usted sea usuario del sistema.</p>
+        <h3>7. Sus derechos</h3>
+        <p>Puede solicitar a la administración consultar, corregir o eliminar sus datos, o retirar su código facial en cualquier momento.</p>
+        <h3>8. Consentimiento</h3>
+        <p>Al registrarse, el docente declara haber leído estos términos y autoriza el tratamiento de sus datos para los fines descritos.</p>
+      </section>
+
+      <footer>
+        <button type="button" class="btn-principal" (click)="cerrarTerminos()">Entendido</button>
+      </footer>
+    </article>
+  </dialog>
+}

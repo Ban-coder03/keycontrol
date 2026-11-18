@@ -1,6 +1,7 @@
 export interface Docente {
   cedula: string;
-  nombre: string;
+  nombre: string;  
+  telefono?: string;
   fcmToken?: string; // token del dispositivo para mandarle notificaciones push
 }
 
